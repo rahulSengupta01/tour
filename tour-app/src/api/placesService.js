@@ -1,21 +1,22 @@
+// tour-app/src/api/placesService.js
 import axios from "axios";
+import { GEOAPIFY_KEY } from "@env";
 
-export const searchPlace = async (query) => {
+export const getNearbyTouristPlaces = async (lat, lon) => {
   try {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-      query
-    )}&addressdetails=1&limit=10`;
+    const url = `https://api.geoapify.com/v2/places?categories=tourism.attraction,tourism.sights&filter=circle:${lon},${lat},5000&limit=20&apiKey=${GEOAPIFY_KEY}`;
 
-    const res = await axios.get(url, {
-      headers: {
-        "User-Agent": "TourApp/1.0 (your-email@example.com)",
-        Accept: "application/json",
-      },
-    });
+    const response = await axios.get(url);
 
-    return res.data;
+    return response.data.features.map((item) => ({
+      name: item.properties.name || "Unknown Place",
+      address: item.properties.address_line2 || "No address available",
+      lat: item.properties.lat,
+      lon: item.properties.lon,
+      distance: item.properties.distance,
+    }));
   } catch (err) {
-    console.log("OSM Error:", err.response?.data || err.message);
+    console.log("Geoapify Error:", err.response?.data || err.message);
     return [];
   }
 };
