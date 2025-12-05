@@ -1,4 +1,5 @@
 // tour-app/src/screens/HomeScreen.js
+// tour-app/src/screens/HomeScreen.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -12,23 +13,11 @@ import {
 import * as Location from "expo-location";
 import { getWeather } from "../api/weatherService";
 import { getNearbyTouristPlaces } from "../api/placesService";
-
-function getDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) ** 2;
-
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return (R * c).toFixed(1);
-}
+import { useNavigation } from "@react-navigation/native";
 
 export default function HomeScreen() {
+  const navigation = useNavigation();
+
   const [locationName, setLocationName] = useState("");
   const [coords, setCoords] = useState(null);
   const [weather, setWeather] = useState(null);
@@ -66,22 +55,13 @@ export default function HomeScreen() {
       );
       setWeather(weatherData);
 
+      // ✅ FETCH FROM YOUR BACKEND (NOT GEOAPIFY DIRECTLY)
       const placesData = await getNearbyTouristPlaces(
         loc.coords.latitude,
         loc.coords.longitude
       );
 
-      const finalPlaces = placesData.map((p) => {
-        const km = getDistance(
-          loc.coords.latitude,
-          loc.coords.longitude,
-          p.lat,
-          p.lon
-        );
-        return { ...p, km };
-      });
-
-      setPlaces(finalPlaces);
+      setPlaces(placesData);
       setLoading(false);
     } catch (e) {
       console.log("HomeScreen Error:", e);
@@ -128,33 +108,60 @@ export default function HomeScreen() {
       {places.length === 0 ? (
         <Text>No tourist places found.</Text>
       ) : (
-        places.map((p, i) => (
-          <View key={i} style={styles.card}>
-            {/* Image */}
-            <Image
-              source={{
-                uri:
-                  p.image ||
-                  "https://upload.wikimedia.org/wikipedia/commons/d/d1/Image_not_available.png",
-              }}
-              style={styles.cardImage}
-            />
+        places.map((item, i) => {
+          const isManaged = item.managed !== null;
+          const place = isManaged ? item.managed : item.external;
 
-            {/* Text Info */}
-            <Text style={styles.cardTitle}>{p.name}</Text>
-            <Text style={styles.cardAddress}>{p.address}</Text>
-            <Text style={styles.distance}>📏 {p.km} km away</Text>
+          return (
+            <View key={i} style={styles.card}>
+              {/* Image */}
+              <Image
+                source={{
+                  uri:
+                    place?.image ||
+                    place?.images?.[0] ||
+                    "https://upload.wikimedia.org/wikipedia/commons/d/d1/Image_not_available.png",
+                }}
+                style={styles.cardImage}
+              />
 
-            {/* Button */}
-            <TouchableOpacity style={styles.bookBtn}>
-              <Text style={styles.bookBtnText}>Book Pass</Text>
-            </TouchableOpacity>
-          </View>
-        ))
+              {/* Text Info */}
+              <Text style={styles.cardTitle}>{place.name}</Text>
+              <Text style={styles.cardAddress}>
+                {item.external?.address || "Address not available"}
+              </Text>
+
+              <Text style={styles.distance}>
+                📏 {(item.external.distance / 1000).toFixed(1)} km away
+              </Text>
+
+              {/* ✅ SHOW BOOK PASS ONLY FOR DB PLACES */}
+              {isManaged ? (
+                <TouchableOpacity
+                  style={styles.bookBtn}
+                  onPress={() =>
+                    navigation.navigate("PlaceDetails", {
+                      placeId: item.managed._id,
+                      external: item.external,
+                    })
+                  }
+                >
+                  <Text style={styles.bookBtnText}>Book Pass</Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.externalBadge}>
+                  <Text style={styles.externalText}>Pass not available</Text>
+                </View>
+              )}
+            </View>
+          );
+        })
       )}
     </ScrollView>
   );
 }
+
+// ---------------- STYLES ----------------
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 15, backgroundColor: "#fff" },
@@ -218,6 +225,18 @@ const styles = StyleSheet.create({
   bookBtnText: {
     color: "white",
     fontSize: 16,
+    fontWeight: "bold",
+  },
+
+  externalBadge: {
+    backgroundColor: "#ddd",
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginTop: 10,
+    alignItems: "center",
+  },
+  externalText: {
+    color: "#555",
     fontWeight: "bold",
   },
 });

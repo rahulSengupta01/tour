@@ -1,22 +1,27 @@
 // tour-app/src/api/placesService.js
 import axios from "axios";
-import { GEOAPIFY_KEY } from "@env";
+
+const API_URL="http://10.99.83.42:5000"; // 🔴 CHANGE THIS
 
 export const getNearbyTouristPlaces = async (lat, lon) => {
   try {
-    const url = `https://api.geoapify.com/v2/places?categories=tourism.attraction,tourism.sights&filter=circle:${lon},${lat},5000&limit=20&apiKey=${GEOAPIFY_KEY}`;
+    const res = await axios.get(
+      `${API_URL}/api/places/nearby?lat=${lat}&lon=${lon}`
+    );
 
-    const response = await axios.get(url);
-
-    return response.data.features.map((item) => ({
-      name: item.properties.name || "Unknown Place",
-      address: item.properties.address_line2 || "No address available",
-      lat: item.properties.lat,
-      lon: item.properties.lon,
-      distance: item.properties.distance,
-    }));
+    return res.data.results;
   } catch (err) {
-    console.log("Geoapify Error:", err.response?.data || err.message);
+    console.log("Nearby Places Error:", err.message);
     return [];
+  }
+};
+
+export const getPlaceById = async (id) => {
+  try {
+    const res = await axios.get(`${API_URL}/api/places/${id}`);
+    return res.data;
+  } catch (err) {
+    console.log("Get place error", err.message);
+    return null;
   }
 };

@@ -5,7 +5,7 @@ import { API_URL } from "@env";
 export const loginUser = async (data) => {
   try {
     //console.log("API CALL TO:", `${API_URL}/login`);
-    const res = await axios.post(`${API_URL}/login`, data);
+    const res = await axios.post(`${API_URL}/auth/login`, data);
     return res.data;
   } catch (err) {
     console.log("LOGIN ERROR:", err.message || err);
@@ -15,7 +15,7 @@ export const loginUser = async (data) => {
 
 export const registerUser = async (data) => {
   try {
-    const res = await axios.post(`${API_URL}/register`, data);
+    const res = await axios.post(`${API_URL}/auth/register`, data);
     return res.data;
   } catch (err) {
     console.log("REGISTER ERROR:", err.response?.data || err);

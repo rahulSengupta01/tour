@@ -1,3 +1,4 @@
+// tour-app/src/Screens/SignupScreen.js
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import Input from "../components/Input";

@@ -1,3 +1,4 @@
+// tour-app/src/screens/LoginScreen.js
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import Input from "../components/Input";
@@ -36,6 +37,11 @@ export default function LoginScreen({ navigation }) {
 
       <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
         <Text style={styles.link}>Create an Account</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => navigation.navigate("AdminLogin")}>
+        <Text style={[styles.link, { marginTop: 20, color: "red" }]}>
+          Login as Admin
+        </Text>
       </TouchableOpacity>
     </View>
   );
